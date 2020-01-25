@@ -97,3 +97,23 @@ class Dense(Layer):
         self.bias_weights = self.bias_weights - self.learn_rate * grad_weights    # update weights with computed gradient (we use grad_weights because df/db = df/dw)
 
         return grad
+
+
+class ReLU(Layer):
+    """
+    ReLu activation layer
+    """
+
+    def forward(self, input):
+        """
+        ReLU activation is linear, capped at 0: max(0, input)
+        """
+
+        return np.maximum(0, input)
+
+    def backward(self, input, grad_output):
+        """
+        Derivative of ReLU is 0 for input < 0, and 1 for input > 0
+        """
+
+        return grad_output * (input > 0)
