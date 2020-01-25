@@ -114,6 +114,9 @@ class ReLU(Layer):
 class LeakyReLU(Layer):
     """
     LeakyReLu activation layer
+
+    Attributes:
+        alpha: factor of scaling down negative input
     """
 
     def __init__(self, alpha=0.2):
@@ -132,5 +135,33 @@ class LeakyReLU(Layer):
         """
 
         da = 1 if input > 0 else self.alpha
+
+        return grad_output * da
+
+
+class ELU(Layer):
+    """
+    ELU activation layer
+
+    Attributes:
+        alpha: factor of scaling down negative input
+    """
+
+    def __init__(self, alpha=1):
+        self.alpha = alpha
+
+    def forward(self, input):
+        """
+        ELU is like LeakyReLU, but instead of scaling linearly, we scale exponentially: alpha * (exp(input) - 1)
+        """
+
+        return np.maximum(self.alpha * (np.exp(input) - 1), input)
+
+    def backward(self, input, grad_output):
+        """
+        Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
+        """
+
+        da = 1 if input > 0 else self.alpha * np.exp(input)
 
         return grad_output * da
