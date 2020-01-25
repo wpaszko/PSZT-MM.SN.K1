@@ -65,7 +65,7 @@ class Dense(Layer):
         super().__init__(output_size)
 
         norm_center = 0
-        norm_std = 2 / math.sqrt(input_size)  # weight should be close to zero, depending on input size
+        norm_std = 2 / math.sqrt(input_size + output_size)  # weight should be close to zero, depending on input size
         norm_trunk = 2 * norm_std  # cut off everything after 2 standard deviations
 
         norm_dist = stats.truncnorm((-(norm_trunk - norm_center)) / norm_std, (norm_trunk - norm_center) / norm_std, loc=0, scale=norm_std)
