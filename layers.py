@@ -15,15 +15,9 @@ from scipy import stats
 class Layer(ABC):
     """
     Layer base class
-
-    Attributes:
-        n: number of neurons
     """
 
     bias = 1
-
-    def __init__(self, neurons):
-        self.n = neurons
 
     @abstractmethod
     def forward(self, input):
@@ -62,8 +56,6 @@ class Dense(Layer):
     """
 
     def __init__(self, input_size, output_size, learn_rate=0.01):
-        super().__init__(output_size)
-
         norm_center = 0
         norm_std = 2 / math.sqrt(input_size + output_size)  # weight should be close to zero, depending on input size
         norm_trunk = 2 * norm_std  # cut off everything after 2 standard deviations
@@ -117,3 +109,28 @@ class ReLU(Layer):
         """
 
         return grad_output * (input > 0)
+
+
+class LeakyReLU(Layer):
+    """
+    LeakyReLu activation layer
+    """
+
+    def __init__(self, alpha=0.2):
+        self.alpha = alpha
+
+    def forward(self, input):
+        """
+        ReLU activation is linear, but instead of capping at 0, we scale negative values down: max(alpha * input, input)
+        """
+
+        return np.maximum(self.alpha * input, input)
+
+    def backward(self, input, grad_output):
+        """
+        Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
+        """
+
+        da = 1 if input > 0 else self.alpha
+
+        return grad_output * da
