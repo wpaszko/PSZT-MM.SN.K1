@@ -1,33 +1,9 @@
-import layers
+import models
 import numpy as np
 
-layers = [layers.Dense(4, 3),
-          layers.ReLU(),
-          layers.Dense(3, 2),
-          layers.Softmax()]
+input = np.array([[1, 2, 3, 4]])
+target = np.array([0, 1])
 
-input = np.array([[1, 2, 3, 4], [1, 2, 3, 4]])
+mlp = models.MultiLayerPerceptron(input.shape[1], target.shape[1], [4, 3])
 
-result = input
-
-for layer in layers:
-    result = layer.forward(result)
-
-result = result / 2
-
-for layer in reversed(layers):
-    result = layer.backward(result)
-
-print(result)
-
-result = input
-
-for layer in layers:
-    result = layer.forward(result)
-
-result = result / 2
-
-for layer in reversed(layers):
-    result = layer.backward(result)
-
-print(result)
+history = mlp.fit(input, target, epochs=100)
