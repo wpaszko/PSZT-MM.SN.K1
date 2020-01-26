@@ -84,7 +84,7 @@ class Dense(Layer):
 
         grad = np.dot(grad_output, self.weights.T)  # compute df/dw = df/da * da/dw
 
-        grad_weights = np.dot(input.T, grad)  # compute gradient with respect to weights df/dw * w
+        grad_weights = np.dot(input.T, grad_output)  # compute gradient with respect to weights df/dw * w
         self.weights = self.weights - self.learn_rate * grad_weights  # update weights with computed gradient
         self.bias_weights = self.bias_weights - self.learn_rate * grad_weights    # update weights with computed gradient (we use grad_weights because df/db = df/dw)
 
@@ -134,7 +134,7 @@ class LeakyReLU(Layer):
         Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
         """
 
-        da = 1 if input > 0 else self.alpha
+        da = np.array([1 if i > 0 else self.alpha for i in input]).reshape(-1, 1)
 
         return grad_output * da
 
@@ -162,6 +162,34 @@ class ELU(Layer):
         Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
         """
 
-        da = 1 if input > 0 else self.alpha * np.exp(input)
+        da = np.array([1 if i > 0 else self.alpha * np.exp(i) for i in input]).reshape(-1, 1)
 
         return grad_output * da
+
+
+class Softmax(Layer):
+    """
+    Softmax activation layer
+
+    Attributes:
+        forward_pass: remembered value from forward passing to not calculate it twice
+    """
+
+    def __init__(self):
+        self.forward_pass = None
+
+    def forward(self, input):
+        """
+        Softmax turns each input value into probability scaled through whole input so [2, 1, 0] -> [0.7, 0.2, 0.1]
+        """
+        shift = input - np.max(input)  # shifting all values towards negative to get rid of large values for better numerical stability
+        exps = np.exp(shift)
+        self.forward_pass = exps / np.sum(exps)
+        return self.forward_pass
+
+    def backward(self, input, grad_output):
+        """
+        Softmax derivative (kinda complicated)
+        """
+
+        return np.dot(grad_output, np.diagflat(self.forward_pass) - np.outer(self.forward_pass, self.forward_pass.T))
