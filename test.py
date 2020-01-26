@@ -1,19 +1,33 @@
-import models
+import layers
+import numpy as np
 
-input = [1]
-target = [1]
+layers = [layers.Dense(4, 3),
+          layers.ReLU(),
+          layers.Dense(3, 2),
+          layers.Softmax()]
 
-input_size = 1
-output_size = 1
-neuron_sizes = [1, 1, 1]
+input = np.array([[1, 2, 3, 4], [1, 2, 3, 4]])
 
+result = input
 
-def loss_function(output_value, target_value):
-    return 0
+for layer in layers:
+    result = layer.forward(result)
 
+result = result / 2
 
-mlp = models.MultiLayerPerceptron(input_size, output_size, len(neuron_sizes), neuron_sizes, loss_function)
+for layer in reversed(layers):
+    result = layer.backward(result)
 
-mlp.fit(input, target)
+print(result)
 
-print("Prediced value: ", mlp.predict(input[0]))
+result = input
+
+for layer in layers:
+    result = layer.forward(result)
+
+result = result / 2
+
+for layer in reversed(layers):
+    result = layer.backward(result)
+
+print(result)

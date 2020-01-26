@@ -15,9 +15,15 @@ from scipy import stats
 class Layer(ABC):
     """
     Layer base class
+
+    Attributes:
+        bias: constant value of 1
+        forward_input: remembered input for forward pass, so we don't have to pass it explicitly from outside
     """
 
-    bias = 1
+    def __init__(self):
+        self.bias = 1
+        self.forward_input = None
 
     @abstractmethod
     def forward(self, input):
@@ -25,19 +31,19 @@ class Layer(ABC):
         Process input the way particular layer does
 
         Args:
-            input: input
+            input: numpy array of shape (1, size) (WARNING: it has to be 2d, shape (size,) is invalid)
 
         Returns:
             processed input
         """
-        pass
+
+        self.forward_input = input
 
     @abstractmethod
-    def backward(self, input, grad_output):
+    def backward(self, grad_output):
         """
         Update layer params with back-propagating gradient
         Args:
-            input: input
             grad_output: gradient from next layer
 
         Returns:
@@ -56,6 +62,7 @@ class Dense(Layer):
     """
 
     def __init__(self, input_size, output_size, learn_rate=0.01):
+        super().__init__()
         norm_center = 0
         norm_std = 2 / math.sqrt(input_size + output_size)  # weight should be close to zero, depending on input size
         norm_trunk = 2 * norm_std  # cut off everything after 2 standard deviations
@@ -71,10 +78,11 @@ class Dense(Layer):
         """
         Compute dot product of input and weights and add bias
         """
+        super().forward(input)
 
         return np.dot(input, self.weights) + self.bias_weights * self.bias
 
-    def backward(self, input, grad_output):
+    def backward(self, grad_output):
         """
         Compute df/dw given grad from next layer (which should be activation layer) df/da
         according to df/dw = df/da * da/dw
@@ -84,9 +92,11 @@ class Dense(Layer):
 
         grad = np.dot(grad_output, self.weights.T)  # compute df/dw = df/da * da/dw
 
-        grad_weights = np.dot(input.T, grad_output)  # compute gradient with respect to weights df/dw * w
+        grad_weights = np.dot(self.forward_input.T, grad_output)  # compute gradient with respect to weights df/dw * w
         self.weights = self.weights - self.learn_rate * grad_weights  # update weights with computed gradient
-        self.bias_weights = self.bias_weights - self.learn_rate * grad_weights    # update weights with computed gradient (we use grad_weights because df/db = df/dw)
+
+        grad_biases = grad_output.mean(axis=0) * self.forward_input.shape[0]  # since biases don't depend on input, average gradient across batch
+        self.bias_weights = self.bias_weights - self.learn_rate * grad_biases    # update weights with computed gradient (we use grad_weights because df/db = df/dw)
 
         return grad
 
@@ -100,15 +110,16 @@ class ReLU(Layer):
         """
         ReLU activation is linear, capped at 0: max(0, input)
         """
+        super().forward(input)
 
         return np.maximum(0, input)
 
-    def backward(self, input, grad_output):
+    def backward(self, grad_output):
         """
         Derivative of ReLU is 0 for input < 0, and 1 for input > 0
         """
 
-        return grad_output * (input > 0)
+        return grad_output * (self.forward_input > 0)
 
 
 class LeakyReLU(Layer):
@@ -120,21 +131,23 @@ class LeakyReLU(Layer):
     """
 
     def __init__(self, alpha=0.2):
+        super().__init__()
         self.alpha = alpha
 
     def forward(self, input):
         """
         ReLU activation is linear, but instead of capping at 0, we scale negative values down: max(alpha * input, input)
         """
+        super().forward(input)
 
         return np.maximum(self.alpha * input, input)
 
-    def backward(self, input, grad_output):
+    def backward(self, grad_output):
         """
         Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
         """
 
-        da = np.array([1 if i > 0 else self.alpha for i in input]).reshape(-1, 1)
+        da = np.array([1 if i > 0 else self.alpha for i in self.forward_input]).reshape(-1, 1)
 
         return grad_output * da
 
@@ -148,21 +161,23 @@ class ELU(Layer):
     """
 
     def __init__(self, alpha=1):
+        super().__init__()
         self.alpha = alpha
 
     def forward(self, input):
         """
         ELU is like LeakyReLU, but instead of scaling linearly, we scale exponentially: alpha * (exp(input) - 1)
         """
+        super().forward(input)
 
         return np.maximum(self.alpha * (np.exp(input) - 1), input)
 
-    def backward(self, input, grad_output):
+    def backward(self, grad_output):
         """
         Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
         """
 
-        da = np.array([1 if i > 0 else self.alpha * np.exp(i) for i in input]).reshape(-1, 1)
+        da = np.array([1 if i > 0 else self.alpha * np.exp(i) for i in self.forward_input]).reshape(-1, 1)
 
         return grad_output * da
 
@@ -176,6 +191,7 @@ class Softmax(Layer):
     """
 
     def __init__(self):
+        super().__init__()
         self.forward_pass = None
 
     def forward(self, input):
@@ -187,9 +203,11 @@ class Softmax(Layer):
         self.forward_pass = exps / np.sum(exps)
         return self.forward_pass
 
-    def backward(self, input, grad_output):
+    def backward(self, grad_output):
         """
         Softmax derivative (kinda complicated)
         """
 
-        return np.dot(grad_output, np.diagflat(self.forward_pass) - np.outer(self.forward_pass, self.forward_pass.T))
+        ds = np.array([np.diagflat(fp) - np.outer(fp, fp.T) for fp in self.forward_pass])
+
+        return np.array([np.dot(grad_output[i], ds[i]) for i in range(grad_output.shape[0])])
