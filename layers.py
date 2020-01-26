@@ -147,7 +147,7 @@ class LeakyReLU(Layer):
         Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
         """
 
-        da = np.array([1 if i > 0 else self.alpha for i in self.forward_input]).reshape(-1, 1)
+        da = np.where(self.forward_input > 0, 1, self.alpha)
 
         return grad_output * da
 
@@ -177,7 +177,7 @@ class ELU(Layer):
         Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
         """
 
-        da = np.array([1 if i > 0 else self.alpha * np.exp(i) for i in self.forward_input]).reshape(-1, 1)
+        da = np.where(self.forward_input > 0, 1, self.alpha * np.exp(self.forward_input))
 
         return grad_output * da
 
