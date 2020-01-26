@@ -111,10 +111,15 @@ class Sequential(Model):
         return history
 
     def evaluate(self, x, y):
-        pass
+        return self.loss.loss(y, self.predict(x))
 
     def predict(self, x):
-        pass
+        input = x
+
+        for layer in self.layers:
+            input = layer.forward(input)
+
+        return input
 
 
 class MultiLayerPerceptron(Sequential):
@@ -137,7 +142,7 @@ class MultiLayerPerceptron(Sequential):
 
         for i in range(len(layer_sizes) - 2):
             layers.append(lrs.Dense(layer_sizes[i], layer_sizes[i + 1], learn_rate))
-            layers.append(lrs.ReLU())
+            layers.append(lrs.LeakyReLU())
 
         layers.append(lrs.Dense(layer_sizes[-2], layer_sizes[-1], learn_rate))
 

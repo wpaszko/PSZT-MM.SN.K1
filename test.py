@@ -22,3 +22,9 @@ target = y_train
 mlp = models.MultiLayerPerceptron(input.shape[1], target.shape[1], [4, 3])
 
 history = mlp.fit(input, target, epochs=100)
+
+print(history)
+
+predictions = mlp.predict(X_test)
+
+print(predictions)
