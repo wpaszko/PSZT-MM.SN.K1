@@ -144,7 +144,7 @@ class LeakyReLU(Layer):
 
     def backward(self, grad_output):
         """
-        Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
+        Derivative of LeakyReLU is alpha for input < 0, and 1 for input > 0
         """
 
         da = np.where(self.forward_input > 0, 1, self.alpha)
@@ -174,7 +174,7 @@ class ELU(Layer):
 
     def backward(self, grad_output):
         """
-        Derivative of LeakyReLU is alpha for input < alpha, and 1 for input > 0
+        Derivative of ELU is alpha * exp(input) for input < 0, and 1 for input > 0
         """
 
         da = np.where(self.forward_input > 0, 1, self.alpha * np.exp(self.forward_input))
@@ -200,7 +200,7 @@ class Softmax(Layer):
         """
         shift = input - np.max(input)  # shifting all values towards negative to get rid of large values for better numerical stability
         exps = np.exp(shift)
-        self.forward_pass = exps / np.sum(exps)
+        self.forward_pass = np.divide(exps.T, np.sum(exps, axis=1)).T
         return self.forward_pass
 
     def backward(self, grad_output):
