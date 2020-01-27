@@ -15,6 +15,8 @@ from abc import ABC, abstractmethod
 import layers as lrs
 import metrics as mtr
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 
 
 class Model(ABC):
@@ -81,32 +83,43 @@ class Sequential(Model):
     Simplest neural network model with layer to layer connection
     """
 
-    def fit(self, x, y, epochs=1, batch_size=1, validation_split=0.0, shuffle=True):
-        history = []
+    def fit(self, x, y, epochs=1, batch_size=1, validation_split=0.1, shuffling=True):
+        history = {'loss': [], 'val_loss': []}  # history of losses
 
-        batches = [x[i:i + batch_size] for i in range(0, len(x), batch_size)]
-        target_batches = [y[i:i + batch_size] for i in range(0, len(y), batch_size)]
+        if 0.0 < validation_split < 1.0:
+            x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=validation_split)  # split data into training and validation sets
+        else:
+            x_train, x_val, y_train, y_val = x, np.array([]), y, np.array([])
 
-        for i in range(epochs):
+        for i in range(epochs):  # learn epochs iterations
 
+            x_e = x_train
+            y_e = y_train
+
+            if shuffling:
+                x_e, y_e = shuffle(x_train, y_train)  # randomly shuffle training data in each epoch
+
+            # divide data into batches
+            batches = [x_e[i:i + batch_size] for i in range(0, len(x_e), batch_size)]
+            target_batches = [y_e[i:i + batch_size] for i in range(0, len(y_e), batch_size)]
             batch_losses = []
 
             for j, batch in enumerate(batches):
-                input = batch
+                predictions = self.predict(batch)  # forward pass
 
-                for layer in self.layers:
-                    input = layer.forward(input)
-
-                batch_loss = self.loss.loss(target_batches[j], input)
+                batch_loss = self.loss.loss(target_batches[j], predictions)  # loss
                 batch_losses.append(batch_loss)
 
-                gradient = self.loss.gradient(target_batches[j], input)
+                gradient = self.loss.gradient(target_batches[j], predictions)  # gradient of loss function
 
                 for layer in reversed(self.layers):
-                    gradient = layer.backward(gradient)
+                    gradient = layer.backward(gradient)  # backward pass
 
+            # after all batches pass  losses into history
             mean_batch_loss = np.mean(batch_losses)
-            history.append(mean_batch_loss)
+            history['loss'].append(mean_batch_loss)
+            if x_val.size != 0:
+                history['val_loss'].append(self.evaluate(x_val, y_val))
 
         return history
 
