@@ -10,7 +10,7 @@ from sklearn.model_selection import KFold
 
 def cross_val_score(model, x, y, k=5, epochs=100, batch_size=1, shuffling=True):
     """
-    Perform k-cross validation and return mean loss
+    Perform k-cross validation and return mean score
 
     Args:
         model: model to validate
@@ -22,9 +22,9 @@ def cross_val_score(model, x, y, k=5, epochs=100, batch_size=1, shuffling=True):
         shuffling: whether to randomly shuffle data in each epoch
 
     Returns:
-        mean loss of k validations
+        mean score of k validations
     """
-    losses = []
+    scores = []
     fresh_model = copy.deepcopy(model)
 
     for train_idx, test_idx in KFold(k).split(x, y):
@@ -35,9 +35,9 @@ def cross_val_score(model, x, y, k=5, epochs=100, batch_size=1, shuffling=True):
 
         model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.0, shuffling=shuffling)
 
-        losses.append(model.evaluate(x_test, y_test))
+        scores.append(model.score(x_test, y_test))
 
-    return np.mean(losses)
+    return np.mean(scores)
 
 
 def one_hot_encode(x):

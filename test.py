@@ -5,7 +5,7 @@ import helpers
 from sklearn.datasets import load_iris
 
 
-def learn_and_evaluate(neurons, learn_rate, k, epochs, batch_size):
+def learn_and_score(neurons, learn_rate, k, epochs, batch_size):
     database = load_iris()
 
     x = database.data
@@ -46,5 +46,5 @@ if __name__ == '__main__':
     parser.add_argument('-b', type=int, default=1, help='batch size (0 - full input)')
     args = parse_args(parser)
 
-    loss = learn_and_evaluate(args.neurons, args.l, args.k, args.e, args.b)
-    print("Loss value:", loss)
+    score = learn_and_score(args.neurons, args.l, args.k, args.e, args.b)
+    print("Score value:", score)
