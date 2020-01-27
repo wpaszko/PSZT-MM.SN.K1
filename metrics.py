@@ -60,3 +60,40 @@ class CrossEntropyLoss(Loss):
         """
         predictions = np.clip(y_pred, self.epsilon, 1. - self.epsilon)
         return - y_true / predictions
+
+
+class Score(ABC):
+    """
+    Score base class
+    """
+
+    @abstractmethod
+    def score(self, y_true, y_pred):
+        """
+        Calculates predictions score
+        Args:
+            y_true: one-hot encoded target
+            y_pred: one-hot encoded predictions
+
+        Returns:
+            score
+        """
+        pass
+
+
+class AccuracyScore(Score):
+    def score(self, y_true, y_pred):
+        """
+        Calculates score as fraction of matches
+        Args:
+            y_true: one-hot encoded target
+            y_pred: one-hot encoded predictions
+
+        Returns:
+            score
+        """
+
+        true_classes = np.argmax(y_true, axis=1)
+        predicted_classes = np.argmax(y_pred, axis=1)
+
+        return np.mean(true_classes == predicted_classes)
