@@ -42,7 +42,7 @@ class Loss(ABC):
 
 class CrossEntropyLoss(Loss):
 
-    epsilon = 1e-12
+    epsilon = 1e-5
 
     def loss(self, y_true, y_pred):
         """
@@ -58,4 +58,5 @@ class CrossEntropyLoss(Loss):
         """
         Gradient of cross entropy with relation to y_pred
         """
-        return - y_true / y_pred
+        predictions = np.clip(y_pred, self.epsilon, 1. - self.epsilon)
+        return - y_true / predictions
