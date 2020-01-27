@@ -27,8 +27,8 @@ def parse_args(parser):
             parser.error("Neuron numbers should be integers > 1")
     if not (0.0 <= args.l <= 1.0):
         parser.error("Learning rate should be between 0.0 and 1.0")
-    if not args.k >= 1:
-        parser.error("K-cross validation size should be at least one")
+    if not args.k >= 2:
+        parser.error("K-cross validation size should be at least two")
     if not args.e >= 1:
         parser.error("There has to be at least one epoch")
     if not args.b >= 0:
