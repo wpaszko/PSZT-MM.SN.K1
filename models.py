@@ -86,6 +86,9 @@ class Sequential(Model):
     def fit(self, x, y, epochs=1, batch_size=1, validation_split=0.1, shuffling=True):
         history = {'loss': [], 'val_loss': []}  # history of losses
 
+        if batch_size == 0:
+            batch_size = x.shape[0]
+
         if 0.0 < validation_split < 1.0:
             x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=validation_split)  # split data into training and validation sets
         else:
