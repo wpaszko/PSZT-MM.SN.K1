@@ -185,9 +185,6 @@ class ELU(Layer):
 class Softmax(Layer):
     """
     Softmax activation layer
-
-    Attributes:
-        forward_pass: remembered value from forward passing to not calculate it twice
     """
 
     def __init__(self):
@@ -198,6 +195,8 @@ class Softmax(Layer):
         """
         Softmax turns each input value into probability scaled through whole input so [2, 1, 0] -> [0.7, 0.2, 0.1]
         """
+        super().forward(input)
+
         shift = input - np.max(input)  # shifting all values towards negative to get rid of large values for better numerical stability
         exps = np.exp(shift)
         self.forward_pass = np.divide(exps.T, np.sum(exps, axis=1)).T
@@ -208,6 +207,5 @@ class Softmax(Layer):
         Softmax derivative (kinda complicated)
         """
 
-        ds = np.array([np.diagflat(fp) - np.outer(fp, fp.T) for fp in self.forward_pass])
-
-        return np.array([np.dot(grad_output[i], ds[i]) for i in range(grad_output.shape[0])])
+        jacobians = np.array([np.diagflat(sample) - np.outer(sample, sample.T) for sample in self.forward_pass])
+        return np.array([grad_output[i] @ jacobians[i] for i in range(grad_output.shape[0])])
